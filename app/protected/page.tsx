@@ -9,6 +9,9 @@ import { EventFeed } from "@/components/event-feed"
 import { StatsOverview } from "@/components/stats-overview"
 import { locations, events } from "@/lib/data"
 
+// Prevent static prerendering - this page requires runtime Supabase credentials
+export const dynamic = 'force-dynamic'
+
 export default function ProtectedPage() {
   const supabase = createClient()
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null)
