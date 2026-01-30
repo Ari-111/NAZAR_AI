@@ -1,4 +1,4 @@
-[]"use client"
+"use client"
 import BoundingBoxDrawer from '@/components/boundingBoxDrawer';
 
 const boxes =[
