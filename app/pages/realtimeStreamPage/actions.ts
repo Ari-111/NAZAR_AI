@@ -1,12 +1,15 @@
 "use server";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
-const API_KEY = process.env.GOOGLE_API_KEY;
-if (!API_KEY) {
-    throw new Error('GOOGLE_API_KEY environment variable is not set');
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (!OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY environment variable is not set');
 }
-const genAI = new GoogleGenerativeAI(API_KEY);
+
+const openai = new OpenAI({
+    apiKey: OPENAI_API_KEY,
+});
 
 export interface VideoEvent {
     timestamp: string;
@@ -14,29 +17,71 @@ export interface VideoEvent {
     isDangerous: boolean;
 }
 
-export async function detectEvents(base64Image: string, transcript: string = ''): Promise<{ events: VideoEvent[], rawResponse: string }> {
-    console.log('Starting frame analysis...');
+export interface PoseKeypoint {
+    x: number;
+    y: number;
+    score?: number;
+    name?: string;
+}
+
+export interface TensorFlowData {
+    poseKeypoints: PoseKeypoint[];
+    faceDetected: boolean;
+    faceConfidence?: number;
+}
+
+export async function detectEvents(
+    base64Image: string, 
+    transcript: string = '',
+    tensorflowData?: TensorFlowData
+): Promise<{ events: VideoEvent[], rawResponse: string }> {
+    console.log('Starting frame analysis with OpenAI Vision...');
     try {
         if (!base64Image) {
             throw new Error("No image data provided");
         }
 
-        const base64Data = base64Image.split(',')[1];
-        if (!base64Data) {
-            throw new Error("Invalid image data format");
+        // Ensure proper data URL format
+        let imageUrl = base64Image;
+        if (!imageUrl.startsWith('data:')) {
+            imageUrl = `data:image/jpeg;base64,${base64Image}`;
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        console.log('Initialized Gemini model');
+        // Build TensorFlow context for enhanced analysis
+        let tensorflowContext = '';
+        if (tensorflowData) {
+            const { poseKeypoints, faceDetected, faceConfidence } = tensorflowData;
+            
+            if (faceDetected) {
+                tensorflowContext += `\nFace Detection: A face was detected with ${faceConfidence ? Math.round(faceConfidence * 100) + '% confidence' : 'high confidence'}.`;
+            } else {
+                tensorflowContext += `\nFace Detection: No face is clearly visible (person may be turned away, fallen, or obscured).`;
+            }
+            
+            if (poseKeypoints && poseKeypoints.length > 0) {
+                // Analyze pose for potential issues
+                const visibleKeypoints = poseKeypoints.filter(kp => (kp.score || 0) > 0.3);
+                const keypointNames = visibleKeypoints.map(kp => kp.name).filter(Boolean);
+                
+                tensorflowContext += `\nPose Detection: ${visibleKeypoints.length} body keypoints detected (${keypointNames.join(', ')}).`;
+                
+                // Check for abnormal poses (low position could indicate fall)
+                const avgY = visibleKeypoints.reduce((sum, kp) => sum + kp.y, 0) / visibleKeypoints.length;
+                if (avgY > 300) { // Lower in frame typically means person is on ground
+                    tensorflowContext += ` The person's body position appears LOW in the frame, which may indicate lying down, fallen, or slumped position.`;
+                }
+                
+                // Check if key body parts are missing (could indicate occlusion or fall)
+                const hasHead = keypointNames.some(n => n?.includes('nose') || n?.includes('eye') || n?.includes('ear'));
+                const hasShoulders = keypointNames.some(n => n?.includes('shoulder'));
+                if (!hasHead && hasShoulders) {
+                    tensorflowContext += ` Head/face keypoints are NOT visible but body is detected - person may be face-down or head is obscured.`;
+                }
+            }
+        }
 
-        const imagePart = {
-            inlineData: {
-                data: base64Data,
-                mimeType: 'image/jpeg'
-            },
-        };
-
-        console.log('Sending image to API...', { imageSize: base64Data.length });
+        console.log('Sending image to OpenAI Vision...', { hasTensorflowData: !!tensorflowData });
+        
         const prompt = `Analyze this frame and determine if any of these specific dangerous situations are occurring:
 
 1. Medical Emergencies:
@@ -67,29 +112,51 @@ export async function detectEvents(base64Image: string, transcript: string = '')
 - Shoplifting
 - Vandalism
 - Trespassing
-${transcript ? `Consider this audio transcript from the scene: "${transcript}"
+${tensorflowContext ? `
+TENSORFLOW ML DETECTION DATA (use this to enhance your analysis):
+${tensorflowContext}
+` : ''}${transcript ? `
+AUDIO TRANSCRIPT from the scene: "${transcript}"
 ` : ''}
-Return a JSON object in this exact format:
+Return ONLY a JSON object in this exact format (no markdown, no code blocks):
 
 {
     "events": [
         {
-            "timestamp": "mm:ss",
+            "timestamp": "00:00",
             "description": "Brief description of what's happening in this frame",
-            "isDangerous": true/false // Set to true if the event involves a fall, injury, unease, pain, accident, or concerning behavior
+            "isDangerous": true or false
         }
     ]
 }`;
 
         try {
-            const result = await model.generateContent([
-                prompt,
-                imagePart,
-            ]);
+            const response = await openai.chat.completions.create({
+                model: "gpt-4o-mini", // Cost-effective vision model with good rate limits
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: prompt
+                            },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: imageUrl,
+                                    detail: "low" // Use low detail for faster processing and lower cost
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 500,
+                temperature: 0.3 // Lower temperature for more consistent outputs
+            });
 
-            const response = await result.response;
-            const text = response.text();
-            console.log('Raw API Response:', text);
+            const text = response.choices[0]?.message?.content || '';
+            console.log('Raw OpenAI Response:', text);
 
             // Try to extract JSON from the response, handling potential code blocks
             let jsonStr = text;
@@ -116,15 +183,15 @@ Return a JSON object in this exact format:
                 };
             } catch (parseError) {
                 console.error('Error parsing JSON:', parseError);
-                throw new Error('Failed to parse API response');
+                return { events: [], rawResponse: text };
             }
 
         } catch (error) {
-            console.error('Error calling API:', error);
-            throw error;
+            console.error('Error calling OpenAI API:', error);
+            return { events: [], rawResponse: String(error) };
         }
     } catch (error) {
         console.error('Error in detectEvents:', error);
-        throw error;
+        return { events: [], rawResponse: String(error) };
     }
 }

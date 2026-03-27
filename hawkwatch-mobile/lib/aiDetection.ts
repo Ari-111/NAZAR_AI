@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
-const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+const API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
 export interface VideoEvent {
     timestamp: string;
@@ -8,69 +8,89 @@ export interface VideoEvent {
     isDangerous: boolean;
 }
 
+export interface PoseKeypoint {
+    x: number;
+    y: number;
+    score?: number;
+    name?: string;
+}
+
+export interface TensorFlowData {
+    poseKeypoints: PoseKeypoint[];
+    faceDetected: boolean;
+    faceConfidence?: number;
+}
+
 export class AIDetectionService {
-    private genAI: GoogleGenerativeAI | null = null;
+    private openai: OpenAI | null = null;
 
     constructor() {
         if (API_KEY) {
-            this.genAI = new GoogleGenerativeAI(API_KEY);
-            console.log('✅ Google AI initialized with API key - will try Gemini 2.0-flash first');
+            this.openai = new OpenAI({
+                apiKey: API_KEY,
+            });
+            console.log('✅ OpenAI initialized with API key');
         } else {
-            console.warn('⚠️ EXPO_PUBLIC_GOOGLE_API_KEY not set, AI detection will use mock data');
+            console.warn('⚠️ EXPO_PUBLIC_OPENAI_API_KEY not set, AI detection will use mock data');
             console.log('💡 To enable real AI analysis:');
-            console.log('   1. Get API key from: https://aistudio.google.com/app/apikey');
-            console.log('   2. Add to .env: EXPO_PUBLIC_GOOGLE_API_KEY=your_key_here');
+            console.log('   1. Get API key from: https://platform.openai.com/api-keys');
+            console.log('   2. Add to .env: EXPO_PUBLIC_OPENAI_API_KEY=your_key_here');
             console.log('   3. Restart the app');
         }
     }
 
-    async detectEvents(base64Image: string, transcript: string = ''): Promise<{ events: VideoEvent[], rawResponse: string }> {
-        console.log('Starting frame analysis...');
+    async detectEvents(
+        base64Image: string, 
+        transcript: string = '',
+        tensorflowData?: TensorFlowData
+    ): Promise<{ events: VideoEvent[], rawResponse: string }> {
+        console.log('Starting frame analysis with OpenAI Vision...');
         
         // If no image provided or no API key is available, return mock data
-        if (!base64Image || !this.genAI || !API_KEY) {
+        if (!base64Image || !this.openai || !API_KEY) {
             console.log('Using mock analysis (no image or API key)');
             return this.getMockEvents();
         }
 
         try {
-            const base64Data = base64Image.split(',')[1];
-            if (!base64Data) {
-                console.log('Invalid image format, using mock data');
-                return this.getMockEvents();
+            // Ensure proper data URL format
+            let imageUrl = base64Image;
+            if (!imageUrl.startsWith('data:')) {
+                imageUrl = `data:image/jpeg;base64,${base64Image}`;
             }
 
-            // Try different model versions in order of preference
-            let model;
-            try {
-                model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                console.log('Initialized Gemini model: gemini-2.5-flash');
-            } catch (error) {
-                console.log('gemini-2.5-flash not available, trying gemini-2.5-flash-lite');
-                try {
-                    model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-                    console.log('Initialized Gemini model: gemini-2.5-flash-lite');
-                } catch (error2) {
-                    console.log('gemini-2.5-flash-lite not available, trying gemini-pro-vision');
-                    try {
-                        model = this.genAI.getGenerativeModel({ model: "gemini-pro-vision" });
-                        console.log('Initialized Gemini model: gemini-pro-vision');
-                    } catch (error3) {
-                        console.log('gemini-pro-vision not available, trying gemini-pro');
-                        model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
-                        console.log('Initialized Gemini model: gemini-pro');
+            // Build TensorFlow context for enhanced analysis
+            let tensorflowContext = '';
+            if (tensorflowData) {
+                const { poseKeypoints, faceDetected, faceConfidence } = tensorflowData;
+                
+                if (faceDetected) {
+                    tensorflowContext += `\nFace Detection: A face was detected with ${faceConfidence ? Math.round(faceConfidence * 100) + '% confidence' : 'high confidence'}.`;
+                } else {
+                    tensorflowContext += `\nFace Detection: No face is clearly visible (person may be turned away, fallen, or obscured).`;
+                }
+                
+                if (poseKeypoints && poseKeypoints.length > 0) {
+                    const visibleKeypoints = poseKeypoints.filter(kp => (kp.score || 0) > 0.3);
+                    const keypointNames = visibleKeypoints.map(kp => kp.name).filter(Boolean);
+                    
+                    tensorflowContext += `\nPose Detection: ${visibleKeypoints.length} body keypoints detected (${keypointNames.join(', ')}).`;
+                    
+                    const avgY = visibleKeypoints.reduce((sum, kp) => sum + kp.y, 0) / visibleKeypoints.length;
+                    if (avgY > 300) {
+                        tensorflowContext += ` The person's body position appears LOW in the frame, which may indicate lying down, fallen, or slumped position.`;
+                    }
+                    
+                    const hasHead = keypointNames.some(n => n?.includes('nose') || n?.includes('eye') || n?.includes('ear'));
+                    const hasShoulders = keypointNames.some(n => n?.includes('shoulder'));
+                    if (!hasHead && hasShoulders) {
+                        tensorflowContext += ` Head/face keypoints are NOT visible but body is detected - person may be face-down or head is obscured.`;
                     }
                 }
             }
 
-            const imagePart = {
-                inlineData: {
-                    data: base64Data,
-                    mimeType: 'image/jpeg'
-                },
-            };
+            console.log('Sending image to OpenAI Vision...', { hasTensorflowData: !!tensorflowData });
 
-            console.log('Sending image to API...', { imageSize: base64Data.length });
             const prompt = `Analyze this frame and determine if any of these specific dangerous situations are occurring:
 
 1. Medical Emergencies:
@@ -101,40 +121,60 @@ export class AIDetectionService {
 - Shoplifting
 - Vandalism
 - Trespassing
-${transcript ? `Consider this audio transcript from the scene: "${transcript}"
+${tensorflowContext ? `
+TENSORFLOW ML DETECTION DATA (use this to enhance your analysis):
+${tensorflowContext}
+` : ''}${transcript ? `
+AUDIO TRANSCRIPT from the scene: "${transcript}"
 ` : ''}
-Return a JSON object in this exact format:
+Return ONLY a JSON object in this exact format (no markdown, no code blocks):
 
 {
     "events": [
         {
-            "timestamp": "mm:ss",
+            "timestamp": "00:00",
             "description": "Brief description of what's happening in this frame",
-            "isDangerous": true/false // Set to true if the event involves a fall, injury, unease, pain, accident, or concerning behavior
+            "isDangerous": true or false
         }
     ]
 }`;
 
             try {
-                const result = await model.generateContent([
-                    prompt,
-                    imagePart,
-                ]);
+                const response = await this.openai.chat.completions.create({
+                    model: "gpt-4o-mini", // Cost-effective vision model with good rate limits
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "text",
+                                    text: prompt
+                                },
+                                {
+                                    type: "image_url",
+                                    image_url: {
+                                        url: imageUrl,
+                                        detail: "low" // Use low detail for faster processing and lower cost
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    max_tokens: 500,
+                    temperature: 0.3
+                });
 
-                const response = await result.response;
-                const text = response.text();
-                console.log('Raw API Response:', text);
+                const text = response.choices[0]?.message?.content || '';
+                console.log('Raw OpenAI Response:', text);
 
-                // Try to extract JSON from the response, handling potential code blocks
+                // Try to extract JSON from the response
                 let jsonStr = text;
                 
-                // First try to extract content from code blocks if present
                 const codeBlockMatch = text.match(/```(?:json)?\s*({[\s\S]*?})\s*```/);
                 if (codeBlockMatch) {
                     jsonStr = codeBlockMatch[1];
                     console.log('Extracted JSON from code block:', jsonStr);
                 } else {
-                    // If no code block, try to find raw JSON
                     const jsonMatch = text.match(/\{[^]*\}/);  
                     if (jsonMatch) {
                         jsonStr = jsonMatch[0];
@@ -149,25 +189,13 @@ Return a JSON object in this exact format:
                 };
 
             } catch (apiError: unknown) {
-                console.error('API call failed:', apiError);
+                console.error('OpenAI API call failed:', apiError);
                 console.log('API key available:', !!API_KEY);
-                
-                const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
-                
-                // If it's a 404 or permission error, the API key might be invalid
-                if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-                    console.warn('API key may be invalid or model not accessible, falling back to mock data');
-                } else if (errorMessage.includes('403') || errorMessage.includes('permission')) {
-                    console.warn('Permission denied, falling back to mock data');
-                }
-                
-                // Always fall back to mock data when API fails
                 return this.getMockEvents();
             }
 
         } catch (error) {
             console.error('Error in AI detection setup:', error);
-            // Fallback to mock data if setup fails
             return this.getMockEvents();
         }
     }
@@ -190,7 +218,6 @@ Return a JSON object in this exact format:
         const currentTime = new Date();
         const timestamp = `${currentTime.getMinutes().toString().padStart(2, '0')}:${currentTime.getSeconds().toString().padStart(2, '0')}`;
         
-        // Return an event 70% of the time to show the system is working
         if (Math.random() > 0.3) {
             console.log('Mock event generated:', randomEvent.description);
             const description = API_KEY ? 
@@ -223,7 +250,6 @@ Return a JSON object in this exact format:
                 return null;
             }
             
-            // Take a picture and convert to base64
             const photo = await cameraRef.current.takePictureAsync({
                 base64: true,
                 quality: 0.7,
@@ -241,7 +267,6 @@ Return a JSON object in this exact format:
             return null;
         } catch (error) {
             console.error('Error capturing frame:', error);
-            // Return mock data if camera capture fails - this ensures analysis continues
             console.log('Using mock data due to capture failure');
             return null;
         }

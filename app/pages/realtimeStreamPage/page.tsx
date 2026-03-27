@@ -10,7 +10,7 @@ import TimestampList from "@/components/timestamp-list"
 import ChatInterface from "@/components/chat-interface"
 import { Timeline } from "../../components/Timeline"
 import type { Timestamp } from "@/app/types"
-import { detectEvents, type VideoEvent } from "./actions"
+import { detectEvents, type VideoEvent, type TensorFlowData } from "./actions"
 
 // Dynamically import TensorFlow.js and models
 import { loadTensorFlowModules, isTensorFlowReady, type TensorFlowModules } from '@/lib/tensorflow-loader'
@@ -388,24 +388,116 @@ export default function Page() {
         return
       }
 
-      const result = await detectEvents(frame, currentTranscript)
+      // Build TensorFlow data for enhanced Gemini analysis
+      const tensorflowData: TensorFlowData = {
+        poseKeypoints: currentPoseKeypoints,
+        faceDetected: faceModelRef.current !== null && currentPoseKeypoints.length > 0,
+        faceConfidence: undefined // Will be set if face is detected
+      }
+
+      // Check face detection status
+      if (faceModelRef.current && videoRef.current) {
+        try {
+          const predictions = await faceModelRef.current.estimateFaces(videoRef.current, false)
+          tensorflowData.faceDetected = predictions.length > 0
+          if (predictions.length > 0) {
+            tensorflowData.faceConfidence = predictions[0].probability as number
+          }
+        } catch (e) {
+          // Face detection failed, keep defaults
+        }
+      }
+
+      console.log('📊 TensorFlow data:', {
+        poseKeypoints: currentPoseKeypoints.length,
+        faceDetected: tensorflowData.faceDetected,
+        faceConfidence: tensorflowData.faceConfidence
+      })
+
+      const result = await detectEvents(frame, currentTranscript, tensorflowData)
       if (!isRecordingRef.current) return
 
-      if (result.events && result.events.length > 0) {
-        result.events.forEach(async (event: VideoEvent) => {
+      // Add null/undefined check for result
+      if (!result || !result.events) {
+        console.warn("No events returned from detectEvents")
+        return
+      }
+
+      if (result.events.length > 0) {
+        // Use for...of instead of forEach for proper async handling
+        for (const event of result.events) {
           const newTimestamp = {
             timestamp: getElapsedTime(),
             description: event.description,
             isDangerous: event.isDangerous
           }
-          setTimestamps((prev) => [...prev, newTimestamp])
+          
+          console.log("Adding new timestamp:", newTimestamp)
+          setTimestamps((prev) => {
+            console.log("Previous timestamps:", prev.length, "Adding:", newTimestamp.description)
+            return [...prev, newTimestamp]
+          })
 
-          // For dangerous events, send an email notification
+          // For dangerous events, send notifications (email + Telegram)
           if (event.isDangerous) {
+            console.log("🚨 DANGEROUS EVENT DETECTED - Sending notifications...")
+            const notificationPayload = {
+              title: "Dangerous Activity Detected",
+              description: `At ${newTimestamp.timestamp}, the following dangerous activity was detected: ${event.description}`,
+              timestamp: newTimestamp.timestamp,
+              imageBase64: frame // Include the captured frame
+            }
+
+            // Send Telegram notification with image
             try {
+              console.log("📱 Sending Telegram notification...")
+              const telegramResponse = await fetch("/api/send-telegram", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json"
+                },
+                body: JSON.stringify(notificationPayload)
+              })
+              
+              if (telegramResponse.ok) {
+                console.log("✅ Telegram notification sent successfully")
+              } else {
+                const telegramError = await telegramResponse.json()
+                console.error("❌ Failed to send Telegram notification:", telegramError)
+              }
+            } catch (telegramError) {
+              console.error("❌ Error sending Telegram notification:", telegramError)
+            }
+
+            // Send WhatsApp notification
+            try {
+              console.log("💬 Sending WhatsApp notification...")
+              const whatsappResponse = await fetch("/api/send-whatsapp", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json"
+                },
+                body: JSON.stringify(notificationPayload)
+              })
+
+              if (whatsappResponse.ok) {
+                console.log("✅ WhatsApp notification sent successfully")
+              } else {
+                const whatsappError = await whatsappResponse.json()
+                console.error("❌ Failed to send WhatsApp notification:", whatsappError)
+              }
+            } catch (whatsappError) {
+              console.error("❌ Error sending WhatsApp notification:", whatsappError)
+            }
+
+            // Send email notification
+            try {
+              console.log("📧 Sending email notification...")
               const emailPayload = {
-                title: "Dangerous Activity Detected",
-                description: `At ${newTimestamp.timestamp}, the following dangerous activity was detected: ${event.description}`
+                title: notificationPayload.title,
+                description: notificationPayload.description
               }
               const response = await fetch("/api/send-email", {
                 method: "POST",
@@ -433,17 +525,17 @@ export default function Page() {
                     `Failed to send email notification. Please try again later.`
                   )
                 }
-                return
+                continue // Continue to next event instead of return
               }
               
               // Only try to parse JSON for successful responses
               const resData = await response.json()
-              console.log("Email notification sent successfully:", resData)
+              console.log("✅ Email notification sent successfully:", resData)
             } catch (error) {
               console.error("Error sending email notification:", error)
             }
           }
-        })
+        }
       }
     } catch (error) {
       console.error("Error analyzing frame:", error)
@@ -498,14 +590,28 @@ export default function Page() {
   // -----------------------------
   // 8) Recording control (start/stop)
   // -----------------------------
-  const startRecording = () => {
+  const startRecording = async () => {
     setCurrentTime(0)
     setVideoDuration(0)
+    
+    // Load TensorFlow models on demand when starting recording
     if (!mlModelsReady) {
-      setError("ML models not ready. Please wait for initialization.")
+      console.log("📦 Loading TensorFlow models on demand...")
+      setInitializationProgress("Loading AI models...")
+      setIsInitializing(true)
+      try {
+        await initMLModels()
+      } catch (err) {
+        setError("Failed to load ML models: " + (err as Error).message)
+        setIsInitializing(false)
+        return
+      }
+    }
+    
+    if (!mediaStreamRef.current) {
+      setError("Camera not ready. Please wait.")
       return
     }
-    if (!mediaStreamRef.current) return
 
     setError(null)
     setTimestamps([])
@@ -532,10 +638,31 @@ export default function Page() {
       recognitionRef.current.start()
     }
 
-    // Start video recording using MediaRecorder with MP4 container
+    // Start video recording using MediaRecorder with WebM container (MP4 not supported by browsers)
     recordedChunksRef.current = []
+    
+    // Check for supported mimeType with audio+video codecs
+    const getSupportedMimeType = () => {
+      const types = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus', 
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm'
+      ]
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          return type
+        }
+      }
+      return 'video/webm'
+    }
+    
+    const mimeType = getSupportedMimeType()
+    console.log('Using MediaRecorder mimeType:', mimeType)
+    
     const mediaRecorder = new MediaRecorder(mediaStreamRef.current, {
-      mimeType: "video/mp4"
+      mimeType
     })
 
     mediaRecorder.ondataavailable = (event) => {
@@ -545,10 +672,10 @@ export default function Page() {
     }
 
     mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunksRef.current, { type: "video/mp4" })
+      const blob = new Blob(recordedChunksRef.current, { type: mimeType })
       const url = URL.createObjectURL(blob)
       setRecordedVideoUrl(url)
-      setVideoName("stream.mp4")
+      setVideoName("stream.webm")
     }
 
     // Set up data handling before starting
@@ -559,10 +686,10 @@ export default function Page() {
     }
 
     mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunksRef.current, { type: "video/mp4" })
+      const blob = new Blob(recordedChunksRef.current, { type: mimeType })
       const url = URL.createObjectURL(blob)
       setRecordedVideoUrl(url)
-      setVideoName("stream.mp4")
+      setVideoName("stream.webm")
     }
 
     mediaRecorderRef.current = mediaRecorder
@@ -687,7 +814,10 @@ export default function Page() {
     initSpeechRecognition()
     const init = async () => {
       await startWebcam()
-      await initMLModels()
+      // TensorFlow models are now loaded on-demand when Start Recording is clicked
+      // This makes the page load faster
+      console.log("📷 Webcam ready. TensorFlow will load when you click Start Recording.")
+      setIsInitializing(false)
     }
     init()
 

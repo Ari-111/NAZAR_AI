@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const { title, description } = await request.json()
-    console.log('Sending email to: graceshao203@gmail.com')
+    console.log('Sending email to: ashishkmr8800@gmail.com')
 
     const resendClient = getResendClient();
     if (!resendClient) {
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await resendClient.emails.send({
       from: 'HawkWatch <onboarding@resend.dev>',
-      to: ['graceshao203@gmail.com'], // Hardcoded email address
+      to: ['ashishkmr8800@gmail.com'], // Hardcoded email address
       subject: `[ALERT] ${title}`,
       html: `
         <h2>${title}</h2>
