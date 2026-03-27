@@ -192,37 +192,37 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl relative">
-        <div className="relative z-10 p-8">
-          <div className="space-y-8">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-start py-8 px-4 sm:px-6">
+      <div className="w-full max-w-5xl relative">
+        <div className="relative z-10 p-0 sm:p-8">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="text-center px-4">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]">
                 Video Timestamp Analyzer
               </h1>
-              <p className="text-zinc-400">Upload a video to analyze key moments and generate timestamps</p>
+              <p className="text-zinc-400 text-sm sm:text-base">Upload a video to analyze key moments and generate timestamps</p>
             </div>
 
             {!videoUrl && (
-              <div className="flex justify-center">
-                <div className="w-full max-w-md">
+              <div className="flex justify-center px-4">
+                <div className="w-full max-w-xl">
                   <label
                     htmlFor="video-upload"
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer border-zinc-700 hover:bg-zinc-800/50 transition-colors"
+                    className="flex flex-col items-center justify-center w-full h-48 sm:h-64 border-2 border-dashed rounded-2xl cursor-pointer border-zinc-700 hover:bg-zinc-800/30 hover:border-purple-500/5 transition-all group backdrop-blur-sm"
                     onDragOver={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      e.currentTarget.classList.add('border-purple-500');
+                      e.currentTarget.classList.add('border-purple-500', 'bg-purple-500/5');
                     }}
                     onDragLeave={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      e.currentTarget.classList.remove('border-purple-500');
+                      e.currentTarget.classList.remove('border-purple-500', 'bg-purple-500/5');
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      e.currentTarget.classList.remove('border-purple-500');
+                      e.currentTarget.classList.remove('border-purple-500', 'bg-purple-500/5');
                       
                       const file = e.dataTransfer.files[0];
                       if (file && file.type.startsWith('video/')) {
@@ -236,11 +236,14 @@ export default function UploadPage() {
                       }
                     }}
                   >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="h-8 w-8 mb-2 text-zinc-400" />
-                      <p className="mb-2 text-sm text-zinc-400">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+                      <div className="p-4 bg-zinc-800/50 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                        <Upload className="h-8 w-8 text-zinc-400 group-hover:text-purple-400" />
+                      </div>
+                      <p className="mb-2 text-base sm:text-lg text-zinc-300">
+                        <span className="font-semibold text-white">Click to upload</span> or drag and drop
                       </p>
+                      <p className="text-xs sm:text-sm text-zinc-500">MP4, WebM, or OGG up to 50MB</p>
                     </div>
                     <input
                       id="video-upload"
@@ -256,37 +259,65 @@ export default function UploadPage() {
             )}
 
             {(isUploading || isAnalyzing) && (
-              <div className="space-y-2">
-                <Progress value={uploadProgress} className="w-full" />
-                <p className="text-center text-sm text-zinc-400">
-                  {isUploading ? "Uploading video..." : "Analyzing video content..."}
-                </p>
+              <div className="max-w-xl mx-auto space-y-4 px-4">
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-zinc-400">{isUploading ? "Uploading video..." : "Analyzing video content..."}</span>
+                  <span className="text-purple-400 font-medium">{uploadProgress}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2 bg-zinc-800" />
               </div>
             )}
 
             {videoUrl && (
-              <div className="space-y-4">
-                <VideoPlayer url={videoUrl} timestamps={timestamps} ref={videoRef} />
-                <TimestampList timestamps={timestamps} onTimestampClick={handleTimestampClick} />
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="text"
-                    placeholder="Video name"
-                    value={videoName}
-                    onChange={(e) => setVideoName(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                  <Button onClick={handleSaveVideo} className="bg-white text-black hover:bg-gray-200">
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Video
-                  </Button>
+              <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 shadow-2xl">
+                      <VideoPlayer url={videoUrl} timestamps={timestamps} ref={videoRef} />
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-zinc-900/30 rounded-2xl border border-white/10">
+                      <div className="flex-1 min-w-[240px]">
+                        <p className="text-xs text-zinc-500 mb-1">Video Title</p>
+                        <Input
+                          type="text"
+                          placeholder="Enter video name"
+                          value={videoName}
+                          onChange={(e) => setVideoName(e.target.value)}
+                          className="bg-black/40 border-white/10 text-white focus:border-purple-500/50 h-10 rounded-xl"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button 
+                          onClick={handleSaveVideo}
+                          className="bg-white text-black hover:bg-zinc-200 rounded-xl px-6 font-semibold"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Video
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-1">
+                    <div className="bg-zinc-900/30 p-4 sm:p-6 rounded-2xl border border-white/10 h-full backdrop-blur-sm">
+                      <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <span>Event Feed</span>
+                        {isAnalyzing && <Loader2 className="w-4 h-4 animate-spin text-purple-400" />}
+                      </h2>
+                      <TimestampList
+                        timestamps={timestamps}
+                        onTimestampClick={handleTimestampClick}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="text-center">
-              <Link href="/pages/saved-videos" className="text-white hover:text-gray-300">
-                View Saved Videos
+            <div className="text-center pt-8">
+              <Link href="/pages/saved-videos" className="text-zinc-400 hover:text-white transition-colors text-sm flex items-center justify-center gap-2">
+                View Saved Videos Library
               </Link>
             </div>
           </div>

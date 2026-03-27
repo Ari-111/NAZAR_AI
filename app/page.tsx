@@ -15,132 +15,132 @@ export default async function Home() {
       
       <div className="w-[100%] h-[95svh] flex flex-col items-center justify-center relative overflow-hidden" style={{ backgroundImage: "url('/gifs/landing-page.gif')", backgroundSize: "cover", backgroundPosition: "center" }}>
         <div className="absolute inset-0 bg-black/75"></div>
-        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
+        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-4 text-center">
           <div className="border border-white p-2 rounded-[40px]">
-            <h2 className="text-base">24/7 Suraksha</h2>
+            <h2 className="text-sm sm:text-base px-2">24/7 Suraksha</h2>
           </div>
-          <h1 className="mt-10 text-6xl font-bold">Turn your <span className="text-[#206EF6]">CCTV</span></h1>
-          <h1 className="mt-8 text-6xl font-bold">into 24/7 suraksha guard</h1>
+          <h1 className="mt-6 sm:mt-10 text-4xl sm:text-6xl font-bold">Turn your <span className="text-[#206EF6]">CCTV</span></h1>
+          <h1 className="mt-4 sm:mt-8 text-4xl sm:text-6xl font-bold line-height-tight">into 24/7 suraksha guard</h1>
 
-          <div className="mt-10">
-            <p className="text-xl">Detect theft, fire , and risks in real-time. No new hardware needed</p>
+          <div className="mt-8 sm:mt-10 max-w-2xl">
+            <p className="text-lg sm:text-xl text-white/80">Detect theft, fire, and risks in real-time. No new hardware needed</p>
           </div>
         </div>
       </div>
 
-      <div id="detection" className="w-[100%] h-auto  flex flex-col items-center justify-center">
-          <div className="mt-20 w-[75%] flex flex-row ">
-                <div className="w-[50%] flex flex-col items-start justify-center">
-                    <div className="w-[40%] flex items-center justify-center p-1 px-2 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
-                      <p className="text-[#F46F6F]">REAL-TIME DETECTION</p>
+      <div id="detection" className="w-[100%] h-auto flex flex-col items-center justify-center px-4 overflow-hidden">
+          <div className="mt-12 sm:mt-20 w-full sm:w-[85%] lg:w-[75%] flex flex-col md:flex-row gap-8 items-center">
+                <div className="w-full md:w-[50%] flex flex-col items-start justify-center">
+                    <div className="inline-flex items-center justify-center p-1 px-3 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
+                      <p className="text-[#F46F6F] text-xs sm:text-sm font-bold">REAL-TIME DETECTION</p>
                     </div>
-                    <h2 className="w-[85%] mt-5 text-5xl font-bold leading-normal">Catches <span className="text-[#F46F6F]">bad actors</span> in real time</h2>
-                    <p className="w-[85%] mt-5 text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects suspicious behavior & sends instant alert to security teams</p>
+                    <h2 className="w-full mt-5 text-3xl sm:text-5xl font-bold leading-tight">Catches <span className="text-[#F46F6F]">bad actors</span> in real time</h2>
+                    <p className="w-full mt-5 text-lg sm:text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects suspicious behavior & sends instant alert to security teams</p>
                 </div>
 
-                <div className="w-[50%]  flex items-center justify-center p-4 min-h-[300px]">
+                <div className="w-full md:w-[50%] flex items-center justify-center p-0 sm:p-4 min-h-[250px] sm:min-h-[300px]">
                   <div className="relative w-full rounded-lg overflow-hidden">
                     <img
                       src="/gifs/theft.gif"
                       alt="Theft detection"
                       className="w-full rounded-xl border-2 border-[rgb(255,255,255,0.4)]"
                     />
-                    <div className="absolute top-[85%] left-[60%] flex items-center gap-2 bg-black/60 border border-[#F46F6F] rounded px-3 py-1.5">
+                    <div className="absolute top-[75%] sm:top-[85%] right-4 sm:left-[60%] flex items-center gap-2 bg-black/60 border border-[#F46F6F] rounded px-3 py-1.5 backdrop-blur-sm">
                       <span className="w-2 h-2 rounded-full bg-[#F46F6F] animate-pulse"></span>
-                      <span className="text-[#F46F6F] text-sm font-semibold tracking-wide">⚠ THEFT DETECTED</span>
+                      <span className="text-[#F46F6F] text-xs sm:text-sm font-semibold tracking-wide">⚠ THEFT DETECTED</span>
                     </div>
                   </div>
                 </div>
           </div>
 
-          <div className="mt-20 w-[75%] flex flex-row-reverse ">
-                <div className="w-[50%] flex flex-col items-end justify-center ">
-                    <div className="w-[85%]">
-                      <div className="w-fit flex items-center justify-center p-1 px-4 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
-                        <p className="text-[#F8E082]">DISASTER PREVENTION</p>
+          <div className="mt-20 w-full sm:w-[85%] lg:w-[75%] flex flex-col md:flex-row-reverse gap-8 items-center">
+                <div className="w-full md:w-[50%] flex flex-col items-start md:items-end justify-center">
+                    <div className="w-full md:w-[85%] flex md:justify-end">
+                      <div className="inline-flex items-center justify-center p-1 px-4 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
+                        <p className="text-[#F8E082] text-xs sm:text-sm font-bold">DISASTER PREVENTION</p>
                       </div>
                     </div>
-                    <h2 className=" w-[85%] mt-5 text-5xl font-bold leading-normal">Detects <span className="text-[#F8E082]">fire hazards</span> instantly</h2>
-                    <p className=" w-[85%] mt-5 text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects smoke and fire in real time & alerts your team and fire department immediately</p>
+                    <h2 className="w-full md:w-[85%] md:text-right mt-5 text-3xl sm:text-5xl font-bold leading-tight">Detects <span className="text-[#F8E082]">fire hazards</span> instantly</h2>
+                    <p className="w-full md:w-[85%] md:text-right mt-5 text-lg sm:text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects smoke and fire in real time & alerts your team and fire department immediately</p>
                 </div>
 
-                <div className="w-[50%] flex items-center justify-center p-4 min-h-[300px]">
+                <div className="w-full md:w-[50%] flex items-center justify-center p-0 sm:p-4 min-h-[250px] sm:min-h-[300px]">
                   <div className="relative w-full rounded-lg overflow-hidden">
                     <img
                       src="/gifs/fire.gif"
                       alt="Fire detection"
                       className="w-full rounded-xl border-2 border-[rgb(255,255,255,0.4)]"
                     />
-                    <div className="absolute top-[85%] left-[60%] flex items-center gap-2 bg-black/60 border border-[#F8E082] rounded px-3 py-1.5">
+                    <div className="absolute top-[75%] sm:top-[85%] right-4 sm:left-[60%] flex items-center gap-2 bg-black/60 border border-[#F8E082] rounded px-3 py-1.5 backdrop-blur-sm">
                       <span className="w-2 h-2 rounded-full bg-[#F8E082] animate-pulse"></span>
-                      <span className="text-[#F8E082] text-sm font-semibold tracking-wide">⚠ FIRE DETECTED</span>
+                      <span className="text-[#F8E082] text-xs sm:text-sm font-semibold tracking-wide">⚠ FIRE DETECTED</span>
                     </div>
                   </div>
                 </div>
           </div>
 
-           <div className="mt-20 w-[75%] flex flex-row ">
-                <div className="w-[50%] flex flex-col items-start justify-center">
-                    <div className="w-[40%] flex items-center justify-center p-1 px-2 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
-                      <p className="text-[#6FF4C6]">SAFETY AWARE</p>
+           <div className="mt-20 w-full sm:w-[85%] lg:w-[75%] flex flex-col md:flex-row gap-8 items-center">
+                <div className="w-full md:w-[50%] flex flex-col items-start justify-center">
+                    <div className="inline-flex items-center justify-center p-1 px-3 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
+                      <p className="text-[#6FF4C6] text-xs sm:text-sm font-bold">SAFETY AWARE</p>
                     </div>
-                    <h2 className="w-[85%] mt-5 text-5xl font-bold leading-normal">Detects <span className="text-[#6FF4C6]">falls</span> instantly</h2>
-                    <p className="w-[85%] mt-5 text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects falls in real time & alerts your team immediately for quick response</p>
+                    <h2 className="w-full mt-5 text-3xl sm:text-5xl font-bold leading-tight">Detects <span className="text-[#6FF4C6]">falls</span> instantly</h2>
+                    <p className="w-full mt-5 text-lg sm:text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects falls in real time & alerts your team immediately for quick response</p>
                 </div>
 
-                <div className="w-[50%]  flex items-center justify-center p-4 min-h-[300px]">
+                <div className="w-full md:w-[50%] flex items-center justify-center p-0 sm:p-4 min-h-[250px] sm:min-h-[300px]">
                   <div className="relative w-full rounded-lg overflow-hidden">
                     <img
                       src="/gifs/fall.gif"
                       alt="Theft detection"
                       className="w-full rounded-xl border-2 border-[rgb(255,255,255,0.4)]"
                     />
-                    <div className="absolute top-[85%] left-[60%] flex items-center gap-2 bg-black/60 border border-[#6FF4C6] rounded px-3 py-1.5">
+                    <div className="absolute top-[75%] sm:top-[85%] right-4 sm:left-[60%] flex items-center gap-2 bg-black/60 border border-[#6FF4C6] rounded px-3 py-1.5 backdrop-blur-sm">
                       <span className="w-2 h-2 rounded-full bg-[#6FF4C6] animate-pulse"></span>
-                      <span className="text-[#6FF4C6] text-sm font-semibold tracking-wide">⚠ FALL DETECTED</span>
+                      <span className="text-[#6FF4C6] text-xs sm:text-sm font-semibold tracking-wide">⚠ FALL DETECTED</span>
                     </div>
                   </div>
                 </div>
           </div>
 
-           <div className="mt-20 w-[75%] flex flex-row-reverse mb-20">
-                <div className="w-[50%] flex flex-col items-end justify-center ">
-                    <div className="w-[85%]">
-                      <div className="w-fit flex items-center justify-center p-1 px-4 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
-                        <p className="text-[#F59E0B]">AGGRESSION ALERT</p>
+           <div className="mt-20 w-full sm:w-[85%] lg:w-[75%] flex flex-col md:flex-row-reverse mb-20 gap-8 items-center">
+                <div className="w-full md:w-[50%] flex flex-col items-start md:items-end justify-center">
+                    <div className="w-full md:w-[85%] flex md:justify-end">
+                      <div className="inline-flex items-center justify-center p-1 px-4 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
+                        <p className="text-[#F59E0B] text-xs sm:text-sm font-bold">AGGRESSION ALERT</p>
                       </div>
                     </div>
-                    <h2 className=" w-[85%] mt-5 text-5xl font-bold leading-normal">Detects <span className="text-[#F59E0B]">fights</span> instantly</h2>
-                    <p className=" w-[85%] mt-5 text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects physical altercations in real time & alerts your team immediately to take action</p>
+                    <h2 className="w-full md:w-[85%] md:text-right mt-5 text-3xl sm:text-5xl font-bold leading-tight">Detects <span className="text-[#F59E0B]">fights</span> instantly</h2>
+                    <p className="w-full md:w-[85%] md:text-right mt-5 text-lg sm:text-xl text-[rgb(255,255,255,0.6)] leading-normal">Nazar detects physical altercations in real time & alerts your team immediately to take action</p>
                 </div>
 
-                <div className="w-[50%] flex items-center justify-center p-4 min-h-[300px]">
+                <div className="w-full md:w-[50%] flex items-center justify-center p-0 sm:p-4 min-h-[250px] sm:min-h-[300px]">
                   <div className="relative w-full rounded-lg overflow-hidden">
                     <img
                       src="/gifs/fight.gif"
                       alt="Fire detection"
                       className="w-full rounded-xl border-2 border-[rgb(255,255,255,0.4)]"
                     />
-                    <div className="absolute top-[85%] left-[60%] flex items-center gap-2 bg-black/60 border border-[#F59E0B] rounded px-3 py-1.5">
+                    <div className="absolute top-[75%] sm:top-[85%] right-4 sm:left-[60%] flex items-center gap-2 bg-black/60 border border-[#F59E0B] rounded px-3 py-1.5 backdrop-blur-sm">
                       <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse"></span>
-                      <span className="text-[#F59E0B] text-sm font-semibold tracking-wide">⚠ FIGHT DETECTED</span>
+                      <span className="text-[#F59E0B] text-xs sm:text-sm font-semibold tracking-wide">⚠ FIGHT DETECTED</span>
                     </div>
                   </div>
                 </div>
           </div>
       </div>
 
-      <div id="cta" className="w-[100%] h-[80svh] flex flex-col items-center justify-center">
-                  <h1 className="mt-10 text-6xl font-bold">Don't wait for incidients to happen.</h1>
-                  <h1 className="mt-8 text-6xl font-bold">Prevent Them!</h1>
+      <div id="cta" className="w-[100%] py-20 px-4 flex flex-col items-center justify-center text-center">
+                  <h1 className="text-4xl sm:text-6xl font-bold">Don't wait for incidients to happen.</h1>
+                  <h1 className="mt-4 sm:mt-8 text-4xl sm:text-6xl font-bold">Prevent Them!</h1>
 
-                  <div className="w-auto mt-20 flex flex-row ">
-                      <Link  href={'/signup'} className="p-4 px-10 mr-10 bg-[#206EF6] rounded-2xl cursor-pointer">
-                        <h2 className="text-lg">Sign Up</h2>
+                  <div className="w-auto mt-12 sm:mt-20 flex flex-col sm:flex-row gap-4 sm:gap-10">
+                      <Link href={'/sign-up'} className="p-4 px-10 bg-[#206EF6] rounded-2xl cursor-pointer hover:bg-[#1a5bc9] transition-colors">
+                        <h2 className="text-lg font-semibold">Sign Up</h2>
                       </Link>
 
-                      <Link href={'https://cal.com/airxashish/30min'} target="on_blank" className="p-4 px-10 rounded-2xl border border-white cursor-pointer">
-                        <h2 className="text-lg">Book Demo</h2>
+                      <Link href={'https://cal.com/airxashish/30min'} target="on_blank" className="p-4 px-10 rounded-2xl border border-white cursor-pointer hover:bg-white/10 transition-colors">
+                        <h2 className="text-lg font-semibold">Book Demo</h2>
                       </Link>
                   </div>
       </div>  

@@ -853,26 +853,26 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl relative">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-start py-8 px-4 sm:px-6">
+      <div className="w-full max-w-5xl relative">
         <div className="absolute inset-0 bg-purple-900/5 blur-3xl rounded-full"></div>
-        <div className="relative z-10 p-8">
-          <div className="space-y-8">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]">
+        <div className="relative z-10 p-0 sm:p-8">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="text-center px-4">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]">
                 Real-time Stream Analyzer
               </h1>
-              <p className="text-zinc-400">
+              <p className="text-zinc-400 text-sm sm:text-base">
                 Analyze your live stream in real-time and detect key moments
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-zinc-900">
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-2xl">
                 {isInitializing && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/90 z-20">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/90 z-20 p-4">
                     <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-2" />
-                    <p className="text-zinc-300">{initializationProgress}</p>
+                    <p className="text-zinc-300 text-center text-sm">{initializationProgress}</p>
                   </div>
                 )}
                 <div className="relative w-full h-full" style={{ aspectRatio: "16/9" }}>
@@ -882,122 +882,132 @@ export default function Page() {
                       autoPlay
                       playsInline
                       muted
-                      width={640}
-                      height={360}
                       className="absolute inset-0 w-full h-full object-cover opacity-0"
                     />
                   )}
                   <canvas
                     ref={canvasRef}
-                    width={640}
-                    height={360}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
               </div>
 
               {error && !isInitializing && (
-                <div className="p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
+                <div className="p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm">
                   {error}
                 </div>
               )}
 
-              <div className="flex justify-center gap-4">
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 px-2">
                 {isInitializing ? (
-                  <button
+                  <Button
                     disabled
-                    className="flex items-center gap-2 px-4 py-2 bg-zinc-600 rounded-lg transition-colors cursor-not-allowed"
+                    className="flex items-center gap-2 px-6 py-4 bg-zinc-600 rounded-xl transition-colors cursor-not-allowed text-sm sm:text-base"
                   >
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Initializing...
-                  </button>
+                  </Button>
                 ) : !isRecording ? (
-                  <button
+                  <Button
                     onClick={startRecording}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-6 py-4 bg-green-600 hover:bg-green-700 rounded-xl transition-all hover:scale-105 active:scale-95 text-sm sm:text-base font-semibold"
                   >
                     <PlayCircle className="w-5 h-5" />
                     Start Analysis
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     onClick={stopRecording}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-6 py-4 bg-red-600 hover:bg-red-700 rounded-xl transition-all hover:scale-105 active:scale-95 text-sm sm:text-base font-semibold"
                   >
                     <StopCircle className="w-5 h-5" />
                     Stop Analysis
-                  </button>
+                  </Button>
                 )}
               </div>
 
               {isRecording && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-sm text-zinc-400">
-                      Recording and analyzing...
+                <div className="flex justify-center">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-xs font-medium text-red-400 uppercase tracking-wider">
+                      Live Analysis
                     </span>
                   </div>
                 </div>
               )}
 
-              <div className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold text-white">
-                    Key Moments Timeline
-                  </h2>
-                  {timestamps.length > 0 ? (
-                    <Timeline
-                      events={timestamps.map(ts => {
-                        // Parse the MM:SS format into seconds
-                        const [minutes, seconds] = ts.timestamp.split(':').map(Number);
-                        const timeInSeconds = minutes * 60 + seconds;
-                        return {
-                          startTime: timeInSeconds,
-                          endTime: timeInSeconds + 3, // Assuming each event lasts 3 seconds
-                          type: ts.isDangerous ? 'warning' : 'normal',
-                          label: ts.description
-                        };
-                      })}
-                      totalDuration={videoDuration || 60} // Default to 60 seconds if not set
-                      currentTime={currentTime}
-                    />
-                  ) : (
-                    <p className="text-zinc-400 text-sm">
-                      {isRecording
-                        ? "Waiting for events..."
-                        : "Start analysis to detect events"}
-                    </p>
-                  )}
-                </div>
-                <TimestampList
-                  timestamps={timestamps}
-                  onTimestampClick={() => {}}
-                />
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-zinc-900/30 p-4 sm:p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">
+                      Key Moments Timeline
+                    </h2>
+                    {timestamps.length > 0 ? (
+                      <Timeline
+                        events={timestamps.map(ts => {
+                          const [m, s] = ts.timestamp.split(':').map(Number);
+                          return {
+                            startTime: m * 60 + s,
+                            endTime: m * 60 + s + 3,
+                            type: ts.isDangerous ? 'warning' : 'normal',
+                            label: ts.description
+                          };
+                        })}
+                        totalDuration={videoDuration || 60}
+                        currentTime={currentTime}
+                      />
+                    ) : (
+                      <p className="text-zinc-500 text-sm sm:text-base italic">
+                        {isRecording ? "Detection active, waiting for events..." : "Start analysis to begin detection."}
+                      </p>
+                    )}
+                  </div>
 
-              {/* Transcript Section */}
-              <div className="mt-8 space-y-2">
-                <h2 className="text-xl font-semibold text-white">
-                  Audio Transcript
-                </h2>
-                <div className="p-4 bg-zinc-900/50 rounded-lg">
-                  {isTranscribing && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-sm text-zinc-400">
-                        Transcribing audio...
-                      </span>
+                  {/* Transcript Section */}
+                  <div className="bg-zinc-900/30 p-4 sm:p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg sm:text-xl font-semibold text-white">
+                        Audio Transcript
+                      </h2>
+                      {isTranscribing && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                          <span className="text-xs text-blue-400">Listening...</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {transcript ? (
-                    <p className="text-zinc-300 whitespace-pre-wrap">
-                      {transcript}
-                    </p>
-                  ) : (
-                    <p className="text-zinc-500 italic">
-                      {isRecording
-                        ? "Waiting for speech..."
+                    <div className="min-h-[100px] p-4 bg-black/40 rounded-xl border border-white/10">
+                      {transcript ? (
+                        <p className="text-zinc-300 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                          {transcript}
+                        </p>
+                      ) : (
+                        <p className="text-zinc-500 text-sm italic">
+                          {isRecording ? "Waiting for speech activity..." : "No audio transcript available."}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-1">
+                  <div className="bg-zinc-900/30 p-4 rounded-2xl border border-white/5 h-full">
+                    <h2 className="text-lg font-semibold text-white mb-4">Event Feed</h2>
+                    <TimestampList
+                      timestamps={timestamps}
+                      onTimestampClick={() => {}}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
                         : "Start recording to capture audio"}
                     </p>
                   )}

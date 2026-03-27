@@ -54,14 +54,14 @@ export default function RootLayout({
 					<main className="min-h-screen flex flex-col items-center">
 						<div className="flex-1 w-full flex flex-col items-center">
 							<nav className="fixed top-0 left-0 right-0 z-[100] w-full flex justify-center border-b border-white/10 bg-black/40 backdrop-blur-md h-16">
-								<div className="w-full max-w-7xl flex justify-between items-center p-3 px-8 text-sm">
-									<div className="flex items-center gap-12">
+								<div className="w-full max-w-7xl flex justify-between items-center p-3 px-4 sm:px-8 text-sm">
+									<div className="flex items-center gap-2 sm:gap-12">
 										<HomeLink />
-										<div className="hidden md:flex items-center">
+										<div className="flex items-center">
 											<HeaderNav />
 										</div>
 									</div>
-									<div className="flex items-center gap-4">
+									<div className="flex items-center gap-2 sm:gap-4">
 										<HeaderAuth />
 									</div>
 								</div>
