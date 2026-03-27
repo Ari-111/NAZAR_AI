@@ -1001,22 +1001,10 @@ export default function Page() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-                        : "Start recording to capture audio"}
-                    </p>
-                  )}
-                </div>
-              </div>
 
               {/* Save section – shown only after recording stops */}
               {isClient && !isRecording && recordedVideoUrl && (
-                <div className="mt-8 p-6 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                <div className="mt-8 p-6 bg-zinc-900/10 rounded-2xl border border-white/5 backdrop-blur-sm">
                   <h2 className="text-xl font-semibold mb-4 text-white">
                     Save Recording
                   </h2>
@@ -1026,11 +1014,11 @@ export default function Page() {
                       placeholder="Enter video name"
                       value={videoName}
                       onChange={(e) => setVideoName(e.target.value)}
-                      className="bg-zinc-800 border-zinc-700 text-white"
+                      className="bg-black/40 border-white/10 text-white rounded-xl"
                     />
                     <Button
                       onClick={handleSaveVideo}
-                      className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+                      className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 rounded-xl"
                       disabled={!videoName}
                     >
                       <Save className="w-4 h-4" />
