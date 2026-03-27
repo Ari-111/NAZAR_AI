@@ -28,7 +28,7 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className="w-[100%] h-auto  flex flex-col items-center justify-center">
+      <div id="detection" className="w-[100%] h-auto  flex flex-col items-center justify-center">
           <div className="mt-20 w-[75%] flex flex-row ">
                 <div className="w-[50%] flex flex-col items-start justify-center">
                     <div className="w-[40%] flex items-center justify-center p-1 px-2 bg-[rgb(0,0,0,0.4)] border border-white rounded-[20px]">
@@ -130,7 +130,7 @@ export default async function Home() {
           </div>
       </div>
 
-      <div className="w-[100%] h-[80svh] flex flex-col items-center justify-center">
+      <div id="cta" className="w-[100%] h-[80svh] flex flex-col items-center justify-center">
                   <h1 className="mt-10 text-6xl font-bold">Don't wait for incidients to happen.</h1>
                   <h1 className="mt-8 text-6xl font-bold">Prevent Them!</h1>
 
@@ -139,14 +139,14 @@ export default async function Home() {
                         <h2 className="text-lg">Sign Up</h2>
                       </Link>
 
-                      <Link href={'/https://cal.com/abhishek-kholiya/30min'} target="on_blank" className="p-4 px-10 rounded-2xl border border-white cursor-pointer">
+                      <Link href={'https://cal.com/airxashish/30min'} target="on_blank" className="p-4 px-10 rounded-2xl border border-white cursor-pointer">
                         <h2 className="text-lg">Book Demo</h2>
                       </Link>
                   </div>
       </div>  
         {/* <ParticleBackground /> */}
         <div className="z-10 text-center space-y-4">
-          {/* <h1 className="text-6xl font-bold mb-2 text-white glow-text">HawkWatch</h1>
+          {/* <h1 className="text-6xl font-bold mb-2 text-white glow-text">Nazar-AI</h1>
           <AnimatedText />
           <Link
             href="/sign-in"

@@ -21,15 +21,14 @@ export default function HomeLink() {
       onClick={handleClick}
       className="flex items-center"
     >
-      <h2 className='text-xl font-bold'>Nazar AI</h2>
-      {/* <Image
-        src="/HawkWatchLogo.png"
-        alt="HawkWatch Logo"
+      <Image
+        src="/Nazarai-no-bg.png"
+        alt="Nazar-AI Logo"
         width={120}
         height={40}
         className="object-contain"
         priority
-      /> */}
+      />
     </Link>
   )
 }
